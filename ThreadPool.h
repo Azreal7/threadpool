@@ -34,13 +34,7 @@ public:
         size_t queued_tasks;
     };
 
-    Stats getStats() const {
-        std::lock_guard<std::mutex> lock(queue_mutex);
-        return Stats{
-            failed_tasks.load(),
-            completed_tasks.load(),
-            tasks.size()};
-    }
+    Stats getStats() const;
 
 private:
     using Task = std::pair<int, std::function<void()>>;
@@ -122,4 +116,14 @@ auto ThreadPool::addTask(F &&f, int priority, Args &&...args)
 
     condition.notify_one();
     return res;
+}
+
+ThreadPool::Stats ThreadPool::getStats() const {
+    {
+        std::lock_guard<std::mutex> lock(queue_mutex);
+        return Stats{
+            failed_tasks.load(),
+            completed_tasks.load(),
+            tasks.size()};
+    }
 }
